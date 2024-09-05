@@ -49,7 +49,8 @@ class SerialInput:
                 if len(voltages) == 2:
                     return voltages[0], voltages[1]
             except ValueError:
-                pass
+                print("Erreur : impossible de convertir les valeurs en float.")
+        print("Erreur : impossible de lire les valeurs des batteries.")
         return None, None
     
 class TestInput:
@@ -73,17 +74,10 @@ class ElectricGame:
         self.score_label = None  # Ajoutez ceci pour le score
         self.scores = []  # Liste pour stocker les scores
         self.score_history = []  # Historique des scores
-        self.input_handler = TestInput() if test_mode else SerialInput('/dev/tty.usbmodem11101')
+        self.input_handler = TestInput() if test_mode else SerialInput('/dev/tty.usbmodem1101')
+        self.player1_voltage = 0
+        self.player2_voltage = 0
         self.show_start_screen()
-
-    def init_serial(self):
-        try:
-            # Remplacez 'COM3' par le port correct pour votre Arduino
-            ser = serial.Serial('/dev/tty.usbmodem11101', 9600)  # Ou '/dev/ttyUSB0' sur Linux
-            return ser
-        except serial.SerialException:
-            print("Erreur : impossible d'ouvrir le port série.")
-            return None
 
     def show_start_screen(self):
         # Supprimer tous les widgets de l'écran de début avant de le réafficher
@@ -117,14 +111,14 @@ class ElectricGame:
         text_label.pack(side=tk.LEFT, padx=(200, 200), pady=20)  # Décalage à droite
 
         # Ajout des batteries pour l'entraînement
-        self.battery1 = BatteryDisplay(self.start_frame, relx=0.05, rely=0.65, anchor='center', label_text="Joueur 1")
-        self.battery2 = BatteryDisplay(self.start_frame, relx=0.95, rely=0.65, anchor='center', label_text="Joueur 2")
+        # self.battery1 = BatteryDisplay(self.start_frame, relx=0.05, rely=0.65, anchor='center', label_text="Joueur 1")
+        # self.battery2 = BatteryDisplay(self.start_frame, relx=0.95, rely=0.65, anchor='center', label_text="Joueur 2")
 
         # Affichage du bouton Jouer avec style
         start_button = RoundedButton(self.start_frame, "Jouer !", self.start_game)
 
         # Démarrer la boucle de dessin des batteries
-        self.update_batteries()
+        # self.update_batteries()
 
     def update_batteries(self):
         # Lecture des valeurs des batteries à partir de l'Arduino
@@ -187,8 +181,12 @@ class ElectricGame:
 
         # Lecture des valeurs des batteries à partir de l'Arduino
         player1_voltage, player2_voltage = self.input_handler.read_values()
+        if player1_voltage is None or player2_voltage is None:
+            player1_voltage, player2_voltage = self.player1_voltage, self.player2_voltage
 
         if player1_voltage is not None and player2_voltage is not None:
+            self.player1_voltage = player1_voltage
+            self.player2_voltage = player2_voltage
             self.battery1.draw_battery(player1_voltage)
             self.battery2.draw_battery(player2_voltage)
 
