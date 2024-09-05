@@ -35,11 +35,15 @@ class GraphDisplay:
 
 class SerialInput:
     def __init__(self, port):
-        try:
-            self.serial_port = serial.Serial(port, 9600)
-        except serial.SerialException:
-            print("Erreur : impossible d'ouvrir le port série.")
-            self.serial_port = None
+        self.serial_port = port
+
+    def open(self):
+        if not self.serial_port:
+            try:
+                self.serial_port = serial.Serial(self.serial_port, 9600)
+            except serial.SerialException:
+                print("Erreur : impossible d'ouvrir le port série.")
+                self.serial_port = None
 
     def read_values(self):
         if self.serial_port and self.serial_port.in_waiting > 0:
@@ -53,10 +57,20 @@ class SerialInput:
         print("Erreur : impossible de lire les valeurs des batteries.")
         return None, None
     
+    def close(self):
+        if self.serial_port:
+            self.serial_port.close()
+
 class TestInput:
     def read_values(self):
         # Générer des valeurs de test aléatoires
         return random.uniform(0, 5), random.uniform(0, 5)
+    
+    def open(self):
+        pass
+
+    def close(self):
+        pass
 
 class ElectricGame:
     def __init__(self, root, test_mode=False, update_interval=10, game_duration=10, window_size_second=3):
@@ -132,6 +146,9 @@ class ElectricGame:
         self.root.after(self.update_interval, self.update_batteries)
 
     def start_game(self):
+        # Ouvrir le port série pour la lecture des valeurs des batteries
+        self.input_handler.open()
+
         self.start_frame.pack_forget()  # Cache l'écran de début
         self.game_frame = tk.Frame(self.root, bg='white')
         self.game_frame.pack(fill=tk.BOTH, expand=True)
@@ -165,6 +182,7 @@ class ElectricGame:
         elapsed_time = int(float(self.time) * float(self.update_interval) / 100)  # Temps écoulé en secondes
 
         if elapsed_time >= self.game_duration:  # Vérifier si le temps de jeu est écoulé
+            self.input_handler.close()
             self.show_end_screen()
             return
 
@@ -334,14 +352,14 @@ class ElectricGame:
         self.production_values = []
         self.scores = []  # Réinitialiser les scores
 
-        # # Si les batteries sont présentes, redessiner
-        # if self.battery1 and self.battery2:
-        #     self.battery1.draw_battery(0)
-        #     self.battery2.draw_battery(0)
+        # Si les batteries sont présentes, redessiner
+        if self.battery1 and self.battery2:
+            self.battery1.draw_battery(0)
+            self.battery2.draw_battery(0)
 
-        # # Si le graphique est présent, le réinitialiser
-        # if hasattr(self, 'graph'):
-        #     self.graph.update_graph([], [], [], 0, 30)  # Réinitialiser le graphique
+        # Si le graphique est présent, le réinitialiser
+        if hasattr(self, 'graph'):
+            self.graph.update_graph([], [], [], 0, 30, 10)  # Réinitialiser le graphique
 
 if __name__ == "__main__":
     root = tk.Tk()
