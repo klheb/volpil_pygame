@@ -35,12 +35,13 @@ class GraphDisplay:
 
 class SerialInput:
     def __init__(self, port):
-        self.serial_port = port
+        self.port = port
+        self.serial_port = None
 
     def open(self):
         if not self.serial_port:
             try:
-                self.serial_port = serial.Serial(self.serial_port, 9600)
+                self.serial_port = serial.Serial(self.port, 9600)
             except serial.SerialException:
                 print("Erreur : impossible d'ouvrir le port série.")
                 self.serial_port = None
@@ -54,12 +55,13 @@ class SerialInput:
                     return voltages[0], voltages[1]
             except ValueError:
                 print("Erreur : impossible de convertir les valeurs en float.")
-        print("Erreur : impossible de lire les valeurs des batteries.")
+        # print("Erreur : impossible de lire les valeurs des batteries.")
         return None, None
     
     def close(self):
         if self.serial_port:
             self.serial_port.close()
+            self.serial_port = None
 
 class TestInput:
     def read_values(self):
@@ -88,7 +90,7 @@ class ElectricGame:
         self.score_label = None  # Ajoutez ceci pour le score
         self.scores = []  # Liste pour stocker les scores
         self.score_history = []  # Historique des scores
-        self.input_handler = TestInput() if test_mode else SerialInput('/dev/tty.usbmodem1101')
+        self.input_handler = TestInput() if test_mode else SerialInput('/dev/cu.usbmodem1101')
         self.player1_voltage = 0
         self.player2_voltage = 0
         self.show_start_screen()
