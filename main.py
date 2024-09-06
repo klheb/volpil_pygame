@@ -7,6 +7,7 @@ from PIL import Image, ImageTk  # Pour manipuler les images
 import serial
 from roundedButton import RoundedButton
 from batteryDisplay import BatteryDisplay
+import math
 
 os.environ['TK_SILENCE_DEPRECATION'] = '1'
 
@@ -246,14 +247,41 @@ class ElectricGame:
 
         self.root.after(self.update_interval, self.update)  # Mettre à jour selon l'intervalle défini
 
-    def generate_continuous_curve(self, length, min_value, max_value, smoothness=0.3):
+    def generate_continuous_curve(self, length, min_value, max_value, smoothness=0.3, min_plateau_duration=15, max_plateau_duration=30):
         values = []
-        current_value = random.uniform(min_value, max_value)
-        for _ in range(length):
-            change = random.uniform(-smoothness, smoothness)
-            current_value += change
-            current_value = max(min_value, min(current_value, max_value))
+        # Définir une valeur intermédiaire
+        mid_value = (min_value + max_value) / 2
+        
+        # Niveaux de plateaux possibles
+        plateau_values = [min_value, mid_value, max_value]
+        
+        # Initialisation de la valeur de départ
+        current_value = random.choice(plateau_values)
+        values.append(current_value)
+        
+        # Durée du plateau actuel (contrôlée par min et max)
+        plateau_duration = random.randint(min_plateau_duration, max_plateau_duration)
+        
+        for i in range(1, length):
+            # Vérifier si nous devons changer de plateau
+            if plateau_duration <= 0:
+                # Changer de plateau
+                next_value = random.choice(plateau_values)
+                
+                # Assurer que le prochain plateau est différent de l'actuel
+                while next_value == current_value:
+                    next_value = random.choice(plateau_values)
+                
+                current_value = next_value
+                # Redéfinir la durée du nouveau plateau
+                plateau_duration = random.randint(min_plateau_duration, max_plateau_duration)
+            
+            # Ajouter la valeur actuelle au résultat
             values.append(current_value)
+            
+            # Décrémenter le compteur de durée du plateau
+            plateau_duration -= 1
+
         return values
     
     def update_score_label(self, score):
@@ -285,7 +313,7 @@ class ElectricGame:
         score_frame.pack(pady=20)
 
         # Afficher le score final et le classement du joueur
-        scores_sorted = sorted(self.score_history, reverse=True)
+        scores_sorted = sorted(self.score_history, reverse=False)
         player_ranking = scores_sorted.index(average_score) + 1  # +1 pour le classement humain
 
         # Frame gauche pour le texte explicatif
@@ -365,5 +393,5 @@ class ElectricGame:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    game = ElectricGame(root, test_mode=False, update_interval=10, game_duration=30)
+    game = ElectricGame(root, test_mode=False, update_interval=10, game_duration=60)
     root.mainloop()
