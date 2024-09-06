@@ -87,6 +87,7 @@ class ElectricGame:
         self.game_frame = None
         self.battery1 = None
         self.battery2 = None
+        self.update_batteries_flag = False
         self.countdown_time = 3  # Temps pour le compte à rebours
         self.score_label = None  # Ajoutez ceci pour le score
         self.scores = []  # Liste pour stocker les scores
@@ -128,14 +129,16 @@ class ElectricGame:
         text_label.pack(side=tk.LEFT, padx=(200, 200), pady=20)  # Décalage à droite
 
         # Ajout des batteries pour l'entraînement
-        # self.battery1 = BatteryDisplay(self.start_frame, relx=0.05, rely=0.65, anchor='center', label_text="Joueur 1")
-        # self.battery2 = BatteryDisplay(self.start_frame, relx=0.95, rely=0.65, anchor='center', label_text="Joueur 2")
+        self.battery1 = BatteryDisplay(self.start_frame, relx=0.05, rely=0.65, anchor='center', label_text="Joueur 1")
+        self.battery2 = BatteryDisplay(self.start_frame, relx=0.95, rely=0.65, anchor='center', label_text="Joueur 2")
 
         # Affichage du bouton Jouer avec style
         start_button = RoundedButton(self.start_frame, "Jouer !", self.start_game)
 
         # Démarrer la boucle de dessin des batteries
-        # self.update_batteries()
+        self.update_batteries_flag = True
+        self.input_handler.open()
+        self.update_batteries()
 
     def update_batteries(self):
         # Lecture des valeurs des batteries à partir de l'Arduino
@@ -149,6 +152,10 @@ class ElectricGame:
         self.root.after(self.update_interval, self.update_batteries)
 
     def start_game(self):
+        # Arrêter la mise à jour des batteries
+        self.update_batteries_flag = False
+        self.input_handler.close()
+        
         # Ouvrir le port série pour la lecture des valeurs des batteries
         self.input_handler.open()
 
